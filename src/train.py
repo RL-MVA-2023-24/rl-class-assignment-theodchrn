@@ -1,5 +1,6 @@
 from gymnasium.wrappers.time_limit import TimeLimit
 from env_hiv import HIVPatient
+from evaluate import evaluate_HIV
 import torch
 import torch.nn as nn
 import random
@@ -139,6 +140,7 @@ class ProjectAgent:
             self.gradient_step = self.gradient_step_target
         else:
             self.gradient_step = self.gradient_step_vanilla
+        self.target = target
 
     def DQN(self):
         nb_neurons=300 
@@ -200,6 +202,7 @@ class ProjectAgent:
         state, _ = env.reset()
         epsilon = self.epsilon_max
         step = 0
+        validation_base = 0
 
         for episode in tqdm(range(max_episode)):
         #while episode < max_episode:
@@ -219,20 +222,41 @@ class ProjectAgent:
             episode_cum_reward += reward
 
             # train
-            self.gradient_step()
+            for _ in range(self.nb_gradient_steps):
+                self.gradient_step()
+
+            # update target network if needed
+            if self.target:
+                if self.update_target_strategy == 'replace':
+                    if step % self.update_target_freq == 0: 
+                        self.target_model.load_state_dict(self.model.state_dict())
+                if self.update_target_strategy == 'ema':
+                    target_state_dict = self.target_model.state_dict()
+                    model_state_dict = self.model.state_dict()
+                    tau = self.update_target_tau
+                    for key in model_state_dict:
+                        target_state_dict[key] = tau*model_state_dict[key] + (1-tau)*target_state_dict[key]
+                    target_model.load_state_dict(target_state_dict)
 
             # next transition
             step += 1
-            if done:
+            if done or trunc:
                 #episode += 1
+                validation_score = evaluate_HIV(agent=self, nb_episode=1)
                 print("Episode ", '{:3d}'.format(episode), 
                       ", epsilon ", '{:6.2f}'.format(epsilon), 
                       ", batch size ", '{:5d}'.format(len(self.memory)), 
                       ", episode return ", '{:4.1f}'.format(episode_cum_reward),
+                      ", Validation score ", '{:4.1f}'.format(validation_score),
                       sep='')
                 state, _ = env.reset()
                 episode_return.append(episode_cum_reward)
                 episode_cum_reward = 0
+                if validation_score > validation_base:
+                    validation_base = validation_base
+                    self.best_model = deepcopy(self.model).to(device)
+                    torch.save(self.best_model.state_dict(), "best_model.pt")
+
             else:
                 state = next_state
 
