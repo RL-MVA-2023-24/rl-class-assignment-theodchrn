@@ -259,7 +259,7 @@ class ProjectAgent:
                 episode_return.append(episode_cum_reward)
                 episode_cum_reward = 0
                 if validation_score > validation_base:
-                    validation_base = validation_base
+                    validation_base = deepcopy(validation_score)
                     self.best_model = deepcopy(self.model).to(device)
                     torch.save(self.best_model.state_dict(), "best_model.pt")
                     print("Saving model!\n")
