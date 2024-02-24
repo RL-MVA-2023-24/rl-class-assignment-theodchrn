@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import random
 import numpy as np
+from tqdm import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -26,7 +27,7 @@ class ProjectAgent:
     Protocols are a way to define formal Python interfaces. They allow for type checking
     and ensure that implementing classes provide specific methods with the expected signatures.
     """
-    import numpy as np
+    #def act(self, observation: np.ndarray, use_random: bool = False) -> int:
     def act(self, observation, use_random=False):
         """
         Determines the next action based on the current observation from the environment.
@@ -51,6 +52,8 @@ class ProjectAgent:
                 Q = self.model(torch.Tensor(observation).unsqueeze(0).to(device))
                 return torch.argmax(Q).item()
 
+
+    #def save(self, path: str) -> None:
     def save(self, path='./agent_state.pt'):
         """
         Saves the agent's current state to a file specified by the path.
@@ -65,6 +68,7 @@ class ProjectAgent:
         torch.save(self.model.state_dict(), path)
 
 
+    #def load(self) -> None:
     def load(self):
         """
         Loads the agent's state from a file specified by the path (HARDCODED). This not a good practice,
@@ -83,29 +87,41 @@ class ProjectAgent:
         """
         self.model.load_state_dict(torch.load('./agent_state.pt', map_location = device))
 
-    def __init__(self, model):
-        config = {'nb_actions': env.action_space.n,
-              'learning_rate': 0.001,
-              'gamma': 0.98, #choisi d'après Ernst et al., 2006
-              'buffer_size': 1000000,
-              'epsilon_min': 0.01,
-              'epsilon_max': 1.,
-              'epsilon_decay_period': 1000,
-              'epsilon_delay_decay': 20,
-              'batch_size': 20,
-              'max_episode' : 200}
-        self.gamma = config['gamma']
-        self.batch_size = config['batch_size']
-        self.nb_actions = config['nb_actions']
-        self.memory = ReplayBuffer(config['buffer_size'], device)
-        self.epsilon_max = config['epsilon_max']
-        self.epsilon_min = config['epsilon_min']
-        self.epsilon_stop = config['epsilon_decay_period']
-        self.epsilon_delay = config['epsilon_delay_decay']
+
+
+
+
+    def __init__(self):
+        self.config = {'nb_actions': env.action_space.n ,
+                  'learning_rate': 0.001,
+                  'gamma': 0.98, #choisi d'après Ernst et al., 2006
+                  'buffer_size': 100,
+                  'epsilon_min': 0.01,
+                  'epsilon_max': 1.,
+                  'epsilon_decay_period': 1000,
+                  'epsilon_delay_decay': 20,
+                  'batch_size': 20,
+                  'max_episode' : 200}
+
+        nb_neurons = 2
+        DQN = torch.nn.Sequential(nn.Linear(env.observation_space.shape[0], nb_neurons),
+                                  nn.ReLU(),
+                                  nn.Linear(nb_neurons, nb_neurons),
+                                  nn.ReLU(), 
+                                  nn.Linear(nb_neurons, env.action_space.n)).to(device)
+
+        self.gamma = self.config['gamma']
+        self.batch_size = self.config['batch_size']
+        self.nb_actions = self.config['nb_actions']
+        self.memory = ReplayBuffer(self.config['buffer_size'], device)
+        self.epsilon_max = self.config['epsilon_max']
+        self.epsilon_min = self.config['epsilon_min']
+        self.epsilon_stop = self.config['epsilon_decay_period']
+        self.epsilon_delay = self.config['epsilon_delay_decay']
         self.epsilon_step = (self.epsilon_max-self.epsilon_min)/self.epsilon_stop
-        self.model = model
+        self.model = DQN
         self.criterion = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['learning_rate'])
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config['learning_rate'])
 
     
     def gradient_step(self):
@@ -120,7 +136,7 @@ class ProjectAgent:
             self.optimizer.step() 
     
     def train(self):
-        max_episode = config['max_episode']
+        max_episode = self.config['max_episode']
         episode_return = []
         episode = 0
         episode_cum_reward = 0
@@ -128,7 +144,8 @@ class ProjectAgent:
         epsilon = self.epsilon_max
         step = 0
 
-        while episode < max_episode:
+        for episode in tqdm(range(max_episode)):
+        #while episode < max_episode:
             # update epsilon
             if step > self.epsilon_delay:
                 epsilon = max(self.epsilon_min, epsilon-self.epsilon_step)
@@ -150,7 +167,7 @@ class ProjectAgent:
             # next transition
             step += 1
             if done:
-                episode += 1
+                #episode += 1
                 print("Episode ", '{:3d}'.format(episode), 
                       ", epsilon ", '{:6.2f}'.format(epsilon), 
                       ", batch size ", '{:5d}'.format(len(self.memory)), 
@@ -183,15 +200,9 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.data)
 
-nb_neurons = 128
-DQN = torch.nn.Sequential(nn.Linear(env.observation_space.shape[0], nb_neurons),
-                          nn.ReLU(),
-                          nn.Linear(nb_neurons, nb_neurons),
-                          nn.ReLU(), 
-                          nn.Linear(nb_neurons, env.action_space.n)).to(device)
 
-if __name__=='__main__':
-    agent = ProjectAgent(DQN)
-    agent.train()
-    agent.save()
-
+## if __name__=='__main__':
+##     agent = ProjectAgent()
+##     agent.train()
+##     agent.save()
+## 
