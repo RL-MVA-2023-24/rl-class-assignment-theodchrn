@@ -103,12 +103,14 @@ class ProjectAgent:
                   'batch_size': 20,
                   'max_episode' : 200}
 
-        nb_neurons = 2
-        DQN = torch.nn.Sequential(nn.Linear(env.observation_space.shape[0], nb_neurons),
+
+        DQN = torch.nn.Sequential(nn.Linear(env.observation_space.shape[0], 120),
                                   nn.ReLU(),
-                                  nn.Linear(nb_neurons, nb_neurons),
+                                  nn.Linear(120, 120),
+                                  nn.ReLU(),
+                                  nn.Linear(120, 84),
                                   nn.ReLU(), 
-                                  nn.Linear(nb_neurons, env.action_space.n)).to(device)
+                                  nn.Linear(84, env.action_space.n)).to(device)
 
         self.gamma = self.config['gamma']
         self.batch_size = self.config['batch_size']
