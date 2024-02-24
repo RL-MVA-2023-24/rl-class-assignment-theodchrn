@@ -5,6 +5,7 @@ import torch.nn as nn
 import random
 import numpy as np
 from tqdm import tqdm
+from copy import deepcopy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -91,26 +92,26 @@ class ProjectAgent:
 
 
 
-    def __init__(self):
+    def __init__(self, target = True):
+
         self.config = {'nb_actions': env.action_space.n ,
-                  'learning_rate': 0.001,
-                  'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                  'buffer_size': 100,
-                  'epsilon_min': 0.01,
-                  'epsilon_max': 1.,
-                  'epsilon_decay_period': 1000,
-                  'epsilon_delay_decay': 20,
-                  'batch_size': 20,
-                  'max_episode' : 200}
+                       'state_dim': env.observation_space.shape[0],
+                       'learning_rate': 0.001,
+                       'gamma': 0.98, #choisi d'après Ernst et al., 2006
+                       'buffer_size': 100000,
+                       'epsilon_min': 0.01,
+                       'epsilon_max': 1.,
+                       'epsilon_decay_period': 17000,
+                       'epsilon_delay_decay': 500,
+                       'batch_size': 500,
+                       'max_episode' : 200,
+                       'gradient_steps': 1,
+                       'update_target_strategy': 'replace', # or 'ema'
+                       'update_target_freq': 400,
+                       'update_target_tau': 0.005,
+                       'criterion': torch.nn.SmoothL1Loss()}
 
 
-        DQN = torch.nn.Sequential(nn.Linear(env.observation_space.shape[0], 120),
-                                  nn.ReLU(),
-                                  nn.Linear(120, 120),
-                                  nn.ReLU(),
-                                  nn.Linear(120, 84),
-                                  nn.ReLU(), 
-                                  nn.Linear(84, env.action_space.n)).to(device)
 
         self.gamma = self.config['gamma']
         self.batch_size = self.config['batch_size']
@@ -121,12 +122,55 @@ class ProjectAgent:
         self.epsilon_stop = self.config['epsilon_decay_period']
         self.epsilon_delay = self.config['epsilon_delay_decay']
         self.epsilon_step = (self.epsilon_max-self.epsilon_min)/self.epsilon_stop
-        self.model = DQN
-        self.criterion = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config['learning_rate'])
+        self.model = self.DQN()
 
+        ## Si mise en place d'un target network.
+        self.target_model = deepcopy(self.model).to(device)
+        self.criterion = self.config['criterion'] if 'criterion' in self.config.keys() else torch.nn.MSELoss()
+        lr = self.config['learning_rate'] if 'learning_rate' in self.config.keys() else 0.001
+        self.optimizer = self.config['optimizer'] if 'optimizer' in self.config.keys() else torch.optim.Adam(self.model.parameters(), lr=lr)
+        self.nb_gradient_steps = self.config['gradient_steps'] if 'gradient_steps' in self.config.keys() else 1
+        self.update_target_strategy = self.config['update_target_strategy'] if 'update_target_strategy' in self.config.keys() else 'replace'
+        self.update_target_freq = self.config['update_target_freq'] if 'update_target_freq' in self.config.keys() else 20
+        self.update_target_tau = self.config['update_target_tau'] if 'update_target_tau' in self.config.keys() else 0.005
+        print(f'{device=}')
+
+        if target:
+            self.gradient_step = self.gradient_step_target
+        else:
+            self.gradient_step = self.gradient_step_vanilla
+
+    def DQN(self):
+        nb_neurons=300 
+
+        # Ancienne version, bof
+##        DQN = torch.nn.Sequential(nn.Linear(env.observation_space.shape[0], 120),
+##                                  nn.ReLU(),
+##                                  nn.Linear(120, 120),
+##                                  nn.ReLU(),
+##                                  nn.Linear(120, 84),
+##                                  nn.ReLU(), 
+##                                  nn.Linear(84, env.action_space.n)).to(device)
+##
+        DQN = torch.nn.Sequential(
+            nn.Linear(self.config['state_dim'], nb_neurons),
+           # nn.BatchNorm1d(nb_neurons),  # Batch Normalization layer after the input layer
+            nn.LeakyReLU(),
+            nn.Linear(nb_neurons, nb_neurons),
+           # nn.BatchNorm1d(nb_neurons),  # Batch Normalization layer after the first hidden layer
+            nn.LeakyReLU(),
+            nn.Linear(nb_neurons, nb_neurons),
+           # nn.BatchNorm1d(nb_neurons),  # Batch Normalization layer after the second hidden layer
+            nn.LeakyReLU(),
+            nn.Linear(nb_neurons, nb_neurons),
+           # nn.BatchNorm1d(nb_neurons),  # Batch Normalization layer after the third hidden layer
+            nn.LeakyReLU(),
+            nn.Linear(nb_neurons, self.config['nb_actions'])
+            ).to(device)
+
+        return DQN
     
-    def gradient_step(self):
+    def gradient_step_vanilla(self):
         if len(self.memory) > self.batch_size:
             X, A, R, Y, D = self.memory.sample(self.batch_size)
             QYmax = self.model(Y).max(1)[0].detach()
@@ -137,6 +181,17 @@ class ProjectAgent:
             loss.backward()
             self.optimizer.step() 
     
+    def gradient_step_target(self):
+        if len(self.memory) > self.batch_size:
+            X, A, R, Y, D = self.memory.sample(self.batch_size)
+            QYmax = self.target_model(Y).max(1)[0].detach()
+            update = torch.addcmul(R, 1-D, QYmax, value=self.gamma)
+            QXA = self.model(X).gather(1, A.to(torch.long).unsqueeze(1))
+            loss = self.criterion(QXA, update.unsqueeze(1))
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step() 
+
     def train(self):
         max_episode = self.config['max_episode']
         episode_return = []
