@@ -105,7 +105,7 @@ class ProjectAgent:
                        'epsilon_decay_period': 17000,
                        'epsilon_delay_decay': 500,
                        'batch_size': 500,
-                       'max_episode' : 200,
+                       'max_episode' : 400,
                        'gradient_steps': 1,
                        'update_target_strategy': 'replace', # or 'ema'
                        'update_target_freq': 400,
@@ -204,7 +204,12 @@ class ProjectAgent:
         step = 0
         validation_base = 0
 
-        for episode in tqdm(range(max_episode)):
+        def generator(episode, max_episode):
+            while episode < max_episode:
+                yield
+
+        for _ in tqdm(generator(episode, max_episode)):
+        #for episode in tqdm(range(max_episode)):
         #while episode < max_episode:
             # update epsilon
             if step > self.epsilon_delay:
@@ -241,7 +246,7 @@ class ProjectAgent:
             # next transition
             step += 1
             if done or trunc:
-                #episode += 1
+                episode += 1
                 validation_score = evaluate_HIV(agent=self, nb_episode=1)
                 print("Episode ", '{:3d}'.format(episode), 
                       ", epsilon ", '{:6.2f}'.format(epsilon), 
@@ -256,6 +261,7 @@ class ProjectAgent:
                     validation_base = validation_base
                     self.best_model = deepcopy(self.model).to(device)
                     torch.save(self.best_model.state_dict(), "best_model.pt")
+                    print("Saving model!\n")
 
             else:
                 state = next_state
