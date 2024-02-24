@@ -54,7 +54,7 @@ class ProjectAgent:
 
 
     #def save(self, path: str) -> None:
-    def save(self, path='./agent_state.pt'):
+    def save(self, path='agent_state.pt'):
         """
         Saves the agent's current state to a file specified by the path.
 
@@ -85,7 +85,7 @@ class ProjectAgent:
         HANDLES ONLY CPU EXECUTION. IF YOU USE A NEURAL NETWORK MODEL, MAKE SURE TO LOAD IT IN A WAY THAT
         DOES NOT REQUIRE A GPU.
         """
-        self.model.load_state_dict(torch.load('./agent_state.pt', map_location = device))
+        self.model.load_state_dict(torch.load('agent_state.pt', map_location = device))
 
 
 
@@ -201,8 +201,8 @@ class ReplayBuffer:
         return len(self.data)
 
 
-## if __name__=='__main__':
-##     agent = ProjectAgent()
-##     agent.train()
-##     agent.save()
-## 
+if __name__=='__main__':
+    agent = ProjectAgent()
+    agent.train()
+    agent.save()
+
