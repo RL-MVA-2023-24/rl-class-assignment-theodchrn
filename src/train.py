@@ -95,6 +95,8 @@ class ProjectAgent:
 
     def __init__(self, target = True):
 
+        print(f'{target=}')
+
         self.config = {'nb_actions': env.action_space.n ,
                        'state_dim': env.observation_space.shape[0],
                        'learning_rate': 0.001,
