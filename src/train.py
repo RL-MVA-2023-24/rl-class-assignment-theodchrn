@@ -7,6 +7,8 @@ from tqdm import tqdm
 import sys
 import os
 from datetime import datetime
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -177,18 +179,18 @@ if __name__ == "__main__":
     FinalAgent.save(FinalAgent.path)
 
 
-#    plt.figure()
-#    plt.plot(ep_length, label="training episode length")
-#    if FinalAgent.config['monitoring_nb_trials']>0:
-#        plt.plot(tot_rewards, label="MC eval of total reward")
-#    plt.legend()
-#    plt.savefig(FinalAgent.path+'-fig1.png')
-#
-#    if FinalAgent.config['monitoring_nb_trials']>0:
-#        plt.figure()
-#        plt.plot(disc_rewards, label="MC eval of discounted reward")
-#        plt.plot(V0, label="average $max_a Q(s_0)$")
-#        plt.legend()
-#        plt.savefig(FinalAgent.path+'-fig2.png')
+    plt.figure()
+    plt.plot(ep_length, label="training episode length")
+    if FinalAgent.config['monitoring_nb_trials']>0:
+        plt.plot(tot_rewards, label="MC eval of total reward")
+    plt.legend()
+    plt.savefig(FinalAgent.path+'-fig1.png')
+
+    if FinalAgent.config['monitoring_nb_trials']>0:
+        plt.figure()
+        plt.plot(disc_rewards, label="MC eval of discounted reward")
+        plt.plot(V0, label="average $max_a Q(s_0)$")
+        plt.legend()
+        plt.savefig(FinalAgent.path+'-fig2.png')
 
     print("Agent trained and saved!")
