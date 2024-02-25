@@ -42,18 +42,18 @@ class ProjectAgent:
                        'nb_neurons' : 512,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 1000,
+                       'buffer_size': 1000000,
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
-                       'epsilon_decay_period': 17000,
-                       'epsilon_delay_decay': 500,
-                       'batch_size': 500,
-                       'gradient_steps': 1,
-                       'update_target_strategy': 'replace', # or 'ema'
-                       'update_target_freq': 400,
-                       'update_target_tau': 0.005,
+                       'epsilon_decay_period': 10000,
+                       'epsilon_delay_decay': 400,
+                       'batch_size': 1024,
+                       'gradient_steps': 4,
+                       'update_target_strategy': 'ema', # or 'ema'
+                       'update_target_freq': 600,
+                       'update_target_tau': 0.001,
                        'criterion': torch.nn.SmoothL1Loss(),
-                       'monitoring_nb_trials': 1, 
+                       'monitoring_nb_trials': 20, 
                        'monitor_every': 50, 
                        'save_every': 50
                        }
