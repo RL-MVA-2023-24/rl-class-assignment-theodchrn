@@ -1,5 +1,4 @@
 from gymnasium.wrappers.time_limit import TimeLimit
-import importlib
 from env_hiv import HIVPatient
 import torch
 import random
@@ -39,7 +38,7 @@ class ProjectAgent:
                        'state_dim': env.observation_space.shape[0],
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 100000,
+                       'buffer_size': 1000,
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 17000,
