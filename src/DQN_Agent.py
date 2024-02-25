@@ -149,6 +149,7 @@ class Agent:
         state, _ = env.reset()
         epsilon = self.epsilon_max
         step = 0
+        best_return = 0
 
         MC_avg_total_reward = []   
         MC_avg_discounted_reward = []   
