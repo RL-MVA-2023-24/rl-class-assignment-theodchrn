@@ -53,7 +53,7 @@ class ProjectAgent:
                        'update_target_freq': 400,
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
-                       'monitoring_nb_trials': 50, 
+                       'monitoring_nb_trials': 1, 
                        'monitor_every': 50, 
                        'save_every': 50
                        }
@@ -66,20 +66,22 @@ class ProjectAgent:
 
         time = datetime.now().strftime("%Y%m%d-%H%M%S")
         if len(sys.argv) == 1:
+            self.agent_name = 'DQN_Agent'
             from DQN_Agent import Agent as agent
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/models/model.pt"
+            self.path = os.getcwd() + "/models/model"
 
         elif len(sys.argv) >= 2:
             import importlib.util
             agent_file = os.getcwd() + "/" + sys.argv[1] # get full path
-            spec = importlib.util.spec_from_file_location(os.path.basename(os.path.normpath(sys.argv[1][:-3])), agent_file) #delete trailing slashes and get module name
+            self.agent_name = os.path.basename(os.path.normpath(sys.argv[1][:-3])) #get only specific module name
+            spec = importlib.util.spec_from_file_location(self.agent_name, agent_file) #delete trailing slashes and get module name
             module = importlib.util.module_from_spec(spec) # import module
             spec.loader.exec_module(module) #load module in its own workspace
             agent = getattr(module, 'Agent') #load the Agent class as agent
 
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/models/{}_{}.pt".format(os.path.basename(os.path.normpath(sys.argv[1][:-3])), time)
+            self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, time)
 
         print(f'{device=}')
 
@@ -177,7 +179,8 @@ if __name__ == "__main__":
 
     # Fill the buffer
     FinalAgent = ProjectAgent()
-    fill_buffer(env, FinalAgent.agent,FinalAgent.config['buffer_size']) 
+    if FinalAgent.agent_name == 'DQN_Agent':
+        fill_buffer(env, FinalAgent.agent,FinalAgent.config['buffer_size']) 
 
     ep_length, disc_rewards, tot_rewards, V0 = FinalAgent.agent.train(env, FinalAgent.config['max_episode'])
     FinalAgent.save(FinalAgent.path)

@@ -92,10 +92,10 @@ class Agent:
             return self.greedy_action(observation)
 
     def save(self, path):
-        torch.save(self.model.state_dict(), path)
+        torch.save(self.model.state_dict(), path + ".pt")
 
     def load(self, path):
-        self.model.load_state_dict(torch.load(path,map_location=device))
+        self.model.load_state_dict(torch.load(path + ".pt",map_location=device))
         self.model.eval()
 
     def gradient_step_target(self):
@@ -121,7 +121,7 @@ class Agent:
             discounted_reward = 0
             step = 0
             while not (done or trunc):
-                a = greedy_action(self.model, x)
+                a = self.greedy_action(x)
                 y,r,done,trunc,_ = env.step(a)
                 x = y
                 total_reward += r
@@ -149,7 +149,6 @@ class Agent:
         state, _ = env.reset()
         epsilon = self.epsilon_max
         step = 0
-        validation_base = 0
 
         MC_avg_total_reward = []   
         MC_avg_discounted_reward = []   
