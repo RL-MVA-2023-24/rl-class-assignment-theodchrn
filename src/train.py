@@ -295,4 +295,5 @@ if __name__=='__main__':
     agent = ProjectAgent()
     agent.train()
     agent.save()
+    print("Agent trained and saved!")
 
