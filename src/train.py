@@ -206,12 +206,12 @@ class ProjectAgent:
         step = 0
         validation_base = 0
 
-        def generator(episode, max_episode):
+        def generator():
             while episode < max_episode:
                 yield
 
 
-        for _ in tqdm(generator(episode, max_episode)):
+        for _ in tqdm(generator()):
         #for episode in tqdm(range(max_episode)):
         #while episode < max_episode:
             # update epsilon
