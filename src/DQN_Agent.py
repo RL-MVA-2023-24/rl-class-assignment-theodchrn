@@ -49,7 +49,7 @@ class MLP(nn.Module):
 
 class Agent:
     def __init__(self, config):
-        self.model = MLP(config['state_dim'], 512, config['nb_actions'], depth = 6, activation =nn.SiLU(), normalization = 'None').to(device)
+        self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
 
         self.nb_actions = config['nb_actions']
         self.nb_observation = config['state_dim']
@@ -172,7 +172,7 @@ class Agent:
 
             # train
             for _ in range(self.nb_gradient_steps):
-                self.gradient_step()
+                self.gradient_step_target()
 
             # update target network if needed
             if self.update_target_strategy == 'replace':
