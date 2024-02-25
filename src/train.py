@@ -108,7 +108,7 @@ class ProjectAgent:
 
 
     #def save(self, path: str) -> None:
-    def save(self, path):
+    def save(self, path = None):
         """
         Saves the agent's current state to a file specified by the path.
 
@@ -119,8 +119,10 @@ class ProjectAgent:
             path (str): The file path where the agent's state should be saved.
 
         """
-        print(f"Sauvegarde du modèle à : {self.path}")
-        torch.save(self.agent.model.state_dict(), self.path)
+        path = self.path if None else path
+        print(f"Sauvegarde du modèle à : {path}")
+        self.agent.save(path)
+        #torch.save(self.agent.model.state_dict(), self.path)
 
 
     #def load(self) -> None:
@@ -141,8 +143,10 @@ class ProjectAgent:
         DOES NOT REQUIRE A GPU.
         """
         print(f"Chargement du modèle {self.path}")
-        self.agent.model.load_state_dict(torch.load(self.path, map_location = device))
-        self.agent.eval()
+        self.agent.load(self.path)
+
+#        self.agent.model.load_state_dict(torch.load(self.path, map_location = device))
+#        self.agent.eval()
 
 
 def fill_buffer(env, agent, buffer_size):

@@ -91,6 +91,13 @@ class Agent:
         else:
             return self.greedy_action(observation)
 
+    def save(self, path):
+        torch.save(self.model.state_dict(), path)
+
+    def load(self, path):
+        self.model.load_state_dict(torch.load(path,map_location=device))
+        self.model.eval()
+
     def gradient_step_target(self):
         if len(self.memory) > self.batch_size:
             X, A, R, Y, D = self.memory.sample(self.batch_size)
