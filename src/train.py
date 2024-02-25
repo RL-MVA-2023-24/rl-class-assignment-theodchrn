@@ -68,7 +68,7 @@ class ProjectAgent:
         if len(sys.argv) == 1:
             from DQN_Agent import Agent as agent
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/models/dqn_agent_{}.pt".format(time)
+            self.path = os.getcwd() + "/models/model.pt"
 
         elif len(sys.argv) >= 2:
             import importlib.util
