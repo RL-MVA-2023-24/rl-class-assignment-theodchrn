@@ -168,7 +168,7 @@ class Agent:
             for _ in range(nb_trials):
                 val = []
                 x,_ = env.reset()
-                val.append(self.value(torch.Tensor(x).unsqueeze(0).to(device)).max().item())
+                val.append(self.value(torch.as_tensor(x, dtype=torch.float32)))
         return np.mean(val)
 
     def train(self, env, nb_rollouts):
