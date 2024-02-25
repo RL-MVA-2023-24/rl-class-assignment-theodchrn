@@ -255,7 +255,7 @@ class ProjectAgent:
                       ", epsilon ", '{:6.2f}'.format(epsilon), 
                       ", batch size ", '{:5d}'.format(len(self.memory)), 
                       ", episode return ", '{:4.1f}'.format(episode_cum_reward),
-                      ", Validation score ", '{:4.8g}'.format(validation_score),
+                      ", Validation score ", '{:4.6g}'.format(validation_score),
                       sep='')
                 state, _ = env.reset()
                 episode_return.append(episode_cum_reward)
@@ -264,7 +264,7 @@ class ProjectAgent:
                     validation_base = validation_score
                     self.best_model = deepcopy(self.model).to(device)
                     torch.save(self.best_model.state_dict(), "best_model.pt")
-                    print(f"Saving model! Current validation score : {validation_score:.9g}\n")
+                    print(f"Saving model! Current validation score : {validation_score:.6g}\n")
 
             else:
                 state = next_state
