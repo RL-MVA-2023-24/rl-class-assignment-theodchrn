@@ -53,12 +53,11 @@ class ProjectAgent:
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 50, 
                        'monitor_every': 50, 
-                       'save_path': './dqn_agent.pth',
                        'save_every': 50
                        }
 
         if len(sys.argv) == 3:
-            self.config['max_episode'] = int(sys.argv[3])
+            self.config['max_episode'] = int(sys.argv[2])
         else:
             self.config['max_episode'] = 20
 
@@ -67,7 +66,7 @@ class ProjectAgent:
         if len(sys.argv) == 1:
             from DQN_Agent import Agent as agent
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/dqn_agent_{}.pt".format(time)
+            self.path = os.getcwd() + "/models/dqn_agent_{}.pt".format(time)
 
         elif len(sys.argv) >= 2:
             import importlib.util
@@ -78,7 +77,7 @@ class ProjectAgent:
             agent = getattr(module, 'Agent') #load the Agent class as agent
 
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/{}_{}.pt".format(sys.argv[1], time)
+            self.path = os.getcwd() + "/models/{}_{}.pt".format(os.path.basename(os.path.normpath(sys.argv[1][:-3])), time)
 
         print(f'{device=}')
 
@@ -119,7 +118,7 @@ class ProjectAgent:
 
         """
         print(f"Sauvegarde du modèle à : {self.path}")
-        torch.save(self.agent.state_dict(), self.path)
+        torch.save(self.agent.model.state_dict(), self.path)
 
 
     #def load(self) -> None:
@@ -140,7 +139,7 @@ class ProjectAgent:
         DOES NOT REQUIRE A GPU.
         """
         print(f"Chargement du modèle {self.path}")
-        self.agent.load_state_dict(torch.load(self.path, map_location = device))
+        self.agent.model.load_state_dict(torch.load(self.path, map_location = device))
         self.agent.eval()
 
 
@@ -178,18 +177,18 @@ if __name__ == "__main__":
     FinalAgent.save(FinalAgent.path)
 
 
-    plt.figure()
-    plt.plot(ep_length, label="training episode length")
-    if self.config['monitoring_nb_trials']>0:
-        plt.plot(tot_rewards, label="MC eval of total reward")
-    plt.legend()
-    plt.savefig(self.path+'-fig1.png')
-
-    if self.config['monitoring_nb_trials']>0:
-        plt.figure()
-        plt.plot(disc_rewards, label="MC eval of discounted reward")
-        plt.plot(V0, label="average $max_a Q(s_0)$")
-        plt.legend()
-        plt.savefig(self.path+'-fig2.png')
+#    plt.figure()
+#    plt.plot(ep_length, label="training episode length")
+#    if FinalAgent.config['monitoring_nb_trials']>0:
+#        plt.plot(tot_rewards, label="MC eval of total reward")
+#    plt.legend()
+#    plt.savefig(FinalAgent.path+'-fig1.png')
+#
+#    if FinalAgent.config['monitoring_nb_trials']>0:
+#        plt.figure()
+#        plt.plot(disc_rewards, label="MC eval of discounted reward")
+#        plt.plot(V0, label="average $max_a Q(s_0)$")
+#        plt.legend()
+#        plt.savefig(FinalAgent.path+'-fig2.png')
 
     print("Agent trained and saved!")
