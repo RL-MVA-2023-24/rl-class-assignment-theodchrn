@@ -42,7 +42,7 @@ class ProjectAgent:
                        'nb_neurons' : 512,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 1000000,
+                       'buffer_size': 10000,
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
