@@ -60,8 +60,10 @@ class ProjectAgent:
 
         if len(sys.argv) == 3:
             self.config['max_episode'] = int(sys.argv[2])
+            self.config['nb_episodes'] = int(sys.argv[2])
         else:
             self.config['max_episode'] = 20
+            self.config['nb_episodes'] = 20
 
 
         time = datetime.now().strftime("%Y%m%d-%H%M%S")
