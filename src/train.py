@@ -67,7 +67,7 @@ class ProjectAgent:
             self.config['nb_episodes'] = 20
 
 
-        time = datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.config['time'] = datetime.now().strftime("%Y%m%d-%H%M%S")
         if len(sys.argv) == 1:
             self.agent_name = 'DQN_Agent'
             from DQN_Agent import Agent as agent

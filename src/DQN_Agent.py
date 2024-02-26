@@ -51,7 +51,7 @@ class Agent:
     def __init__(self, config):
         #self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
         self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.ReLU(), normalization = 'None').to(device)
-
+        self.time = config['time']
         self.nb_actions = config['nb_actions']
         self.nb_observation = config['state_dim']
         self.gamma = config['gamma']
@@ -228,9 +228,9 @@ class Agent:
                 if episode % self.save_every == 0:
                     self.saved_model = deepcopy(self.model).to(device)
                     if os.path.isdir('/kaggle/working'):
-                        torch.save(self.saved_model.state_dict(), "/kaggle/working/saved_model.pt")
+                        torch.save(self.saved_model.state_dict(), "/kaggle/working/saved_model_{}.pt".format(self.time))
                     else:
-                        torch.save(self.saved_model.state_dict(), "saved_model.pt")
+                        torch.save(self.saved_model.state_dict(), "saved_model_{}.pt".format(self.time))
 
 
                 if self.monitoring_nb_trials>0 and episode % self.monitor_every == 0: 
@@ -252,7 +252,7 @@ class Agent:
                     if MC_tr > best_return:
                         best_return = MC_tr
                         self.best_model = deepcopy(self.model).to(device)
-                        torch.save(self.best_model.state_dict(), "best_model.pt")
+                        torch.save(self.best_model.state_dict(), "best_model_{}.pt".format(self.time))
                         print(f"Saving model! Current validation score : {validation_score:.6g}\n")
                         print("Saving model! Best return is updated to ", best_return)
                 else:
