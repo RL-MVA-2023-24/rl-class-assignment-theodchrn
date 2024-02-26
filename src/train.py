@@ -43,7 +43,7 @@ class ProjectAgent:
                        'nb_neurons' : 128,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 10000,
+                       'buffer_size': 100,
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
@@ -56,7 +56,7 @@ class ProjectAgent:
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 20, 
                        'monitor_every': 50, 
-                       'save_every': 40
+                       'save_every': 1
                        }
 
         if len(sys.argv) == 3:
@@ -83,8 +83,12 @@ class ProjectAgent:
             spec.loader.exec_module(module) #load module in its own workspace
             agent = getattr(module, 'Agent') #load the Agent class as agent
 
+            self.config['agent_name'] = self.agent_name
+            print(f"{self.config['agent_name']=}")
             self.agent = agent(self.config)
             self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, self.config['time'])
+            if len(sys.argv)==4:
+                self.agent.load(sys.argv[-1][:-3])
 
         print(f'{device=}')
 

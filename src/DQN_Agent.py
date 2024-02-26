@@ -52,6 +52,7 @@ class Agent:
         #self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
         self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.ReLU(), normalization = 'None').to(device)
         self.time = config['time']
+        self.name = config['agent_name']
         self.nb_actions = config['nb_actions']
         self.nb_observation = config['state_dim']
         self.gamma = config['gamma']
@@ -97,6 +98,8 @@ class Agent:
         torch.save(self.model.state_dict(), path + ".pt")
 
     def load(self, path):
+        device = "cuda" if next(self.model.parameters()).is_cuda else "cpu"
+        print(f"loading model {path}")
         self.model.load_state_dict(torch.load(path + ".pt",map_location=device))
         self.model.eval()
 
@@ -229,7 +232,8 @@ class Agent:
                     self.saved_model = deepcopy(self.model).to(device)
                     if os.path.isdir('/kaggle/working'):
                         print("Kaggle saving")
-                        torch.save(self.saved_model.state_dict(), "/kaggle/working/saved_model_{}.pt".format(self.time))
+                        torch.save(self.saved_model.state_dict(), "/kaggle/working/saved_model_kaggle_{}_{}.pt".format(self.name, self.time))
+                        #torch.save(self.saved_model.state_dict(), "saved_model_kaggle_{}.pt".format(self.time))
                     else:
                         print("basic saving.")
                         torch.save(self.saved_model.state_dict(), "saved_model_{}.pt".format(self.time))
