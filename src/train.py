@@ -39,11 +39,11 @@ class ProjectAgent:
 
         self.config = {'nb_actions': env.action_space.n ,
                        'state_dim': env.observation_space.shape[0],
-                       'hidden_layers' : 6,
-                       'nb_neurons' : 512,
+                       'hidden_layers' : 5,
+                       'nb_neurons' : 128,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 10,
+                       'buffer_size': 10000,
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
