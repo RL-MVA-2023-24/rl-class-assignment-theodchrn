@@ -51,12 +51,12 @@ class ProjectAgent:
                        'batch_size': 1024,
                        'gradient_steps': 4,
                        'update_target_strategy': 'replace', # or 'ema'
-                       'update_target_freq': 600,
+                       'update_target_freq': 100,
                        'update_target_tau': 0.001,
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 20, 
                        'monitor_every': 50, 
-                       'save_every': 1
+                       'save_every': 40
                        }
 
         if len(sys.argv) == 3:
