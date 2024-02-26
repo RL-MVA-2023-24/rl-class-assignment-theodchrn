@@ -49,7 +49,7 @@ class ProjectAgent:
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
                        'gradient_steps': 4,
-                       'update_target_strategy': 'ema', # or 'ema'
+                       'update_target_strategy': 'replace', # or 'ema'
                        'update_target_freq': 600,
                        'update_target_tau': 0.001,
                        'criterion': torch.nn.SmoothL1Loss(),

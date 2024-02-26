@@ -49,7 +49,8 @@ class MLP(nn.Module):
 
 class Agent:
     def __init__(self, config):
-        self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
+        #self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
+        self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.RELU(), normalization = 'None').to(device)
 
         self.nb_actions = config['nb_actions']
         self.nb_observation = config['state_dim']
@@ -68,6 +69,7 @@ class Agent:
         self.criterion = config['criterion'] if 'criterion' in config.keys() else torch.nn.MSELoss()
         lr = config['learning_rate'] if 'learning_rate' in config.keys() else 0.001
         self.optimizer = config['optimizer'] if 'optimizer' in config.keys() else torch.optim.Adam(self.model.parameters(), lr=lr)
+        self.optimizer2 = config['optimizer2'] if 'optimizer' in config.keys() else torch.optim.Adam(self.model.parameters(), lr=lr)
         self.nb_gradient_steps = config['gradient_steps'] if 'gradient_steps' in config.keys() else 1
         self.update_target_strategy = config['update_target_strategy'] if 'update_target_strategy' in config.keys() else 'replace'
         self.update_target_freq = config['update_target_freq'] if 'update_target_freq' in config.keys() else 20
@@ -108,6 +110,28 @@ class Agent:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step() 
+
+
+    # double dqn???
+    def gradient_step_v2(self):
+        if len(self.memory) > self.batch_size:
+            X, A, R, Y, D = self.memory.sample(self.batch_size)
+            Q_target_Ymax = self.target_model(Y).max(1)[0].detach()
+            Q_Ymax = self.model(Y).max(1)[0].detach()
+            next_Q = torch.min(Q_target_Ymax, Q_Ymax)
+            update = torch.addcmul(R, 1-D, next_Q, value=self.gamma)
+            Q_target_XA = self.target_model(X).gather(1, A.to(torch.long).unsqueeze(1))
+            Q_XA = self.model(X).gather(1, A.to(torch.long).unsqueeze(1))
+            
+            loss = self.criterion(Q_target_XA, update.unsqueeze(1))
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step() 
+            
+            loss = self.criterion(Q_XA, update.unsqueeze(1))
+            self.optimizer2.zero_grad()
+            loss.backward()
+            self.optimizer2.step() 
 
 
     def MC_eval(self, env, nb_trials):
@@ -178,7 +202,9 @@ class Agent:
 
             # train
             for _ in range(self.nb_gradient_steps):
-                self.gradient_step_target()
+#                self.gradient_step_target()
+                self.gradient_step_v2()
+
 
             # update target network if needed
             if self.update_target_strategy == 'replace':
