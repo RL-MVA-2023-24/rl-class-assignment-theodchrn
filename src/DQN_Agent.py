@@ -50,7 +50,7 @@ class MLP(nn.Module):
 class Agent:
     def __init__(self, config):
         #self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
-        self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.RELU(), normalization = 'None').to(device)
+        self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.ReLU(), normalization = 'None').to(device)
 
         self.nb_actions = config['nb_actions']
         self.nb_observation = config['state_dim']
