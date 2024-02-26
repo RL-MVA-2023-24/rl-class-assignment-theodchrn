@@ -228,8 +228,10 @@ class Agent:
                 if episode % self.save_every == 0:
                     self.saved_model = deepcopy(self.model).to(device)
                     if os.path.isdir('/kaggle/working'):
+                        print("Kaggle saving")
                         torch.save(self.saved_model.state_dict(), "/kaggle/working/saved_model_{}.pt".format(self.time))
                     else:
+                        print("basic saving.")
                         torch.save(self.saved_model.state_dict(), "saved_model_{}.pt".format(self.time))
 
 
