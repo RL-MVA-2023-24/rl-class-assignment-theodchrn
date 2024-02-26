@@ -69,8 +69,10 @@ class Agent:
         self.target_model = deepcopy(self.model).to(device)
         self.criterion = config['criterion'] if 'criterion' in config.keys() else torch.nn.MSELoss()
         lr = config['learning_rate'] if 'learning_rate' in config.keys() else 0.001
+
         self.optimizer = config['optimizer'] if 'optimizer' in config.keys() else torch.optim.Adam(self.model.parameters(), lr=lr)
         self.optimizer2 = config['optimizer2'] if 'optimizer' in config.keys() else torch.optim.Adam(self.model.parameters(), lr=lr)
+
         self.nb_gradient_steps = config['gradient_steps'] if 'gradient_steps' in config.keys() else 1
         self.update_target_strategy = config['update_target_strategy'] if 'update_target_strategy' in config.keys() else 'replace'
         self.update_target_freq = config['update_target_freq'] if 'update_target_freq' in config.keys() else 20
@@ -80,13 +82,15 @@ class Agent:
         self.monitoring_nb_trials = config['monitoring_nb_trials'] if 'monitoring_nb_trials' in config.keys() else 0
         self.monitor_every = config['monitor_every'] if 'monitor_every' in config.keys() else 10
         self.save_every = config['save_every'] if 'save_every' in config.keys() else 100
+        self.double = config['double'] if 'double' in config.keys() else True
+        self.save_always = config['save_always'] if 'save_always' in config.keys() else 20
 
 
     def greedy_action(self, observation):
         device = "cuda" if next(self.model.parameters()).is_cuda else "cpu"
         with torch.no_grad():
             Q = self.model(torch.Tensor(observation).unsqueeze(0).to(device))
-        return torch.argmax(Q).item()
+            return torch.argmax(Q).item()
 
     def act(self, observation, use_random=False):
         if use_random:
@@ -115,8 +119,7 @@ class Agent:
             self.optimizer.step() 
 
 
-    # double dqn???
-    def gradient_step_v2(self):
+    def gradient_step_double(self):
         if len(self.memory) > self.batch_size:
             X, A, R, Y, D = self.memory.sample(self.batch_size)
             Q_target_Ymax = self.target_model(Y).max(1)[0].detach()
@@ -168,7 +171,9 @@ class Agent:
         return np.mean(val)
 
 
+
     def train(self, env, max_episode = None):
+        self.model.train()
         max_episode = 20 if None else max_episode
         episode_return = []
         episode = 0
@@ -182,6 +187,7 @@ class Agent:
         MC_avg_discounted_reward = []   
         V_init_state = []   
 
+        self.gradient_step = self.gradient_step_double if self.double else self.gradient_step_target
         def generator():
             while episode < max_episode:
                 yield
@@ -205,8 +211,8 @@ class Agent:
 
             # train
             for _ in range(self.nb_gradient_steps):
-#                self.gradient_step_target()
-                self.gradient_step_v2()
+                self.gradient_step_target()
+                #self.gradient_step()
 
 
             # update target network if needed
@@ -228,7 +234,7 @@ class Agent:
                 validation_score = evaluate_HIV(agent=self, nb_episode=1)
 
                 # Monitoring
-                if episode % self.save_every == 0:
+                if episode % self.save_always == 0:
                     self.saved_model = deepcopy(self.model).to(device)
                     if os.path.isdir('/kaggle/working'):
                         print("Kaggle saving")

@@ -40,24 +40,27 @@ class ProjectAgent:
         self.config = {'nb_actions': env.action_space.n ,
                        'state_dim': env.observation_space.shape[0],
                        'hidden_layers' : 5,
-                       'nb_neurons' : 128,
+                       'nb_neurons' : 256,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 100,
+                       'buffer_size': 20000, #en-dessous de 5 000 on dirait qu'il n'apprend pas
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
-                       'gradient_steps': 4,
-                       'update_target_strategy': 'replace', # or 'ema'
+                       'gradient_steps': 2,
+                       'update_target_strategy':'ema', #'ema', # or
                        'update_target_freq': 100,
-                       'update_target_tau': 0.001,
+                       'update_target_tau': 0.005
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 20, 
                        'monitor_every': 50, 
-                       'save_every': 1
+                       'save_every': 50,
+                       'save_always': 25,
+                       'double' : True,
                        }
+        print(len(sys.argv))
 
         if len(sys.argv) == 3:
             self.config['max_episode'] = int(sys.argv[2])
