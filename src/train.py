@@ -1,4 +1,5 @@
 from gymnasium.wrappers.time_limit import TimeLimit
+## todo : possibilié loader modèle + argparser saad souilmi
 from env_hiv import HIVPatient
 import torch
 import random
@@ -42,7 +43,7 @@ class ProjectAgent:
                        'nb_neurons' : 512,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 10000,
+                       'buffer_size': 10,
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
