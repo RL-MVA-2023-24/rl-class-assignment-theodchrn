@@ -50,7 +50,7 @@ class ProjectAgent:
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
                        'gradient_steps': 2,
-                       'update_target_strategy':'ema', #'ema', # or
+                       'update_target_strategy':'replace', #'ema', # or
                        'update_target_freq': 100,
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
@@ -62,18 +62,13 @@ class ProjectAgent:
                        }
         print(len(sys.argv))
 
-        if len(sys.argv) == 3:
-            self.config['max_episode'] = int(sys.argv[2])
-            self.config['nb_episodes'] = int(sys.argv[2])
-        else:
-            self.config['max_episode'] = 20
-            self.config['nb_episodes'] = 20
-
-
         self.config['time'] = datetime.now().strftime("%Y%m%d-%H%M%S")
         if len(sys.argv) == 1:
             self.agent_name = 'DQN_Agent'
             from DQN_Agent import Agent as agent
+            self.config['agent_name'] = self.agent_name
+            self.config['max_episode'] = 20
+            self.config['nb_episodes'] = 20
             self.agent = agent(self.config)
             self.path = os.getcwd() + "/models/model"
 
@@ -86,10 +81,13 @@ class ProjectAgent:
             spec.loader.exec_module(module) #load module in its own workspace
             agent = getattr(module, 'Agent') #load the Agent class as agent
 
+            self.config['max_episode'] = int(sys.argv[2])
+            self.config['nb_episodes'] = int(sys.argv[2])
             self.config['agent_name'] = self.agent_name
             print(f"{self.config['agent_name']=}")
             self.agent = agent(self.config)
             self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, self.config['time'])
+
             if len(sys.argv)==4:
                 self.agent.load(sys.argv[-1][:-3])
 
@@ -154,7 +152,7 @@ class ProjectAgent:
         HANDLES ONLY CPU EXECUTION. IF YOU USE A NEURAL NETWORK MODEL, MAKE SURE TO LOAD IT IN A WAY THAT
         DOES NOT REQUIRE A GPU.
         """
-        print(f"Chargement du modèle {self.path}")
+        # print(f"Chargement du modèle {self.path}")
         self.agent.load(self.path)
 
 #        self.agent.model.load_state_dict(torch.load(self.path, map_location = device))
