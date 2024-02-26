@@ -52,7 +52,7 @@ class ProjectAgent:
                        'gradient_steps': 2,
                        'update_target_strategy':'ema', #'ema', # or
                        'update_target_freq': 100,
-                       'update_target_tau': 0.005
+                       'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 20, 
                        'monitor_every': 50, 
