@@ -225,6 +225,14 @@ class Agent:
                 validation_score = evaluate_HIV(agent=self, nb_episode=1)
 
                 # Monitoring
+                if episode % self.save_every == 0:
+                    self.saved_model = deepcopy(self.model).to(device)
+                    if os.path.isdir('/kaggle/working'):
+                        torch.save(self.saved_model.state_dict(), "/kaggle/working/saved_model.pt")
+                    else:
+                        torch.save(self.saved_model.state_dict(), "saved_model.pt")
+
+
                 if self.monitoring_nb_trials>0 and episode % self.monitor_every == 0: 
                     MC_dr, MC_tr = self.MC_eval(env, self.monitoring_nb_trials)    
                     V0 = self.V_initial_state(env, self.monitoring_nb_trials)   

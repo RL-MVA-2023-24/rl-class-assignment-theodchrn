@@ -56,7 +56,7 @@ class ProjectAgent:
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 20, 
                        'monitor_every': 50, 
-                       'save_every': 50
+                       'save_every': 1
                        }
 
         if len(sys.argv) == 3:
