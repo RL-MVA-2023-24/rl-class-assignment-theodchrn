@@ -84,7 +84,7 @@ class ProjectAgent:
             agent = getattr(module, 'Agent') #load the Agent class as agent
 
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, time)
+            self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, self.config['time'])
 
         print(f'{device=}')
 
