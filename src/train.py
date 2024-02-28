@@ -62,7 +62,6 @@ class ProjectAgent:
                        'update_mem_every' : 20,          # how often to update the priorities
                        'update_mem_par_every' : 3000,     # how often to update the hyperparameters
                        }
-        print(len(sys.argv))
 
         self.config['time'] = datetime.now().strftime("%Y%m%d-%H%M%S")
         if len(sys.argv) == 1:

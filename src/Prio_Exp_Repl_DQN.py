@@ -232,7 +232,7 @@ class Agent():
             eps = max(eps_end, eps_decay*eps) # decrease epsilon
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
             if i_episode % 100 == 0:
-                print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
+                print('\n \rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
                 elapsed_time = time.time() - start_time
                 print("Duration: ", elapsed_time)
             if np.mean(scores_window)>=1e10:
