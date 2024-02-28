@@ -42,15 +42,15 @@ class ProjectAgent:
                        'hidden_layers' : 5,
                        'nb_neurons' : 512,
                        'learning_rate': 0.001,
-                       'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 100000, #en-dessous de 5 000 on dirait qu'il n'apprend pas
+                       'gamma': 0.95, #choisi d'après Ernst et al., 2006
+                       'buffer_size': 10000, #en-dessous de 5 000 on dirait qu'il n'apprend pas
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
                        'gradient_steps': 2,
-                       'update_target_strategy':'replace', #'ema', # or
+                       'update_target_strategy':'ema', #'ema', # or
                        'update_target_freq': 100,
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
@@ -58,7 +58,7 @@ class ProjectAgent:
                        'monitor_every': 3, 
                        'save_every': 50,
                        'save_always': 25,
-                       'double' : False,
+                       'double' : True,
                        'update_mem_every' : 20,          # how often to update the priorities
                        'update_mem_par_every' : 3000,     # how often to update the hyperparameters
                        }
