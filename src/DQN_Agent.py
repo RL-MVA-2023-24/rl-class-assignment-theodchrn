@@ -245,6 +245,11 @@ class Agent:
                         torch.save(self.saved_model.state_dict(), "saved_model_{}.pt".format(self.time))
 
 
+                if validation_score > best_return:
+                    torch.save(self.model.state_dict(), "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int)))
+                    print("Saving raw model! Best return is updated to ", best_return)
+
+
                 if self.monitoring_nb_trials>0 and episode % self.monitor_every == 0: 
                     MC_dr, MC_tr = self.MC_eval(env, self.monitoring_nb_trials)    
                     V0 = self.V_initial_state(env, self.monitoring_nb_trials)   
@@ -261,10 +266,10 @@ class Agent:
                           ", MC disc ", '{:6.0f}'.format(MC_dr),
                           ", V0 ", '{:6.0f}'.format(V0),
                           sep='')
-                    if MC_tr > best_return:
-                        best_return = MC_tr
+                    if validation_score > best_return:
+                        best_return = validation_score
                         self.best_model = deepcopy(self.model).to(device)
-                        torch.save(self.best_model.state_dict(), "best_model_{}.pt".format(self.time))
+                        torch.save(self.best_model.state_dict(), "best_model_{}_val_len_{}.pt".format(self.time, np.floor(np.log10(np.abs(validation_score))).astype(int)))
                         print(f"Saving model! Current validation score : {validation_score:.6g}\n")
                         print("Saving model! Best return is updated to ", best_return)
                 else:

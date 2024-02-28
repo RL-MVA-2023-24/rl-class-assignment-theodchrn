@@ -55,10 +55,12 @@ class ProjectAgent:
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
                        'monitoring_nb_trials': 20, 
-                       'monitor_every': 50, 
+                       'monitor_every': 3, 
                        'save_every': 50,
                        'save_always': 25,
-                       'double' : True,
+                       'double' : False,
+                       'update_mem_every' : 20,          # how often to update the priorities
+                       'update_mem_par_every' : 3000,     # how often to update the hyperparameters
                        }
         print(len(sys.argv))
 
