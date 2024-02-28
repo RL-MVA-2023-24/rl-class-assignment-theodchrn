@@ -43,7 +43,7 @@ class ProjectAgent:
                        'nb_neurons' : 512,
                        'learning_rate': 0.001,
                        'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 200000, #en-dessous de 5 000 on dirait qu'il n'apprend pas
+                       'buffer_size': 100000, #en-dessous de 5 000 on dirait qu'il n'apprend pas
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
@@ -58,7 +58,7 @@ class ProjectAgent:
                        'monitor_every': 3, 
                        'save_every': 50,
                        'save_always': 25,
-                       'double' : True,
+                       'double' : False,
                        'update_mem_every' : 20,          # how often to update the priorities
                        'update_mem_par_every' : 3000,     # how often to update the hyperparameters
                        }
@@ -164,7 +164,7 @@ def fill_buffer(env, agent, buffer_size):
     state, _ = env.reset()
     progress_bar = tqdm(total=buffer_size, desc="Filling the replay buffer")
     for _ in range(buffer_size):
-        action = agent.act(state)
+        action = agent.act(state, use_random = False)
         next_state, reward, done, trunc, _ = env.step(action)
         agent.memory.append(state, action, reward, next_state, done)
         if done or trunc:

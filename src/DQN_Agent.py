@@ -182,6 +182,7 @@ class Agent:
         epsilon = self.epsilon_max
         step = 0
         best_return = 0
+        self.previous_raw = None
 
         MC_avg_total_reward = []   
         MC_avg_discounted_reward = []   
@@ -246,8 +247,13 @@ class Agent:
 
 
                 if validation_score > best_return:
+                    if self.previous_raw is not None:
+                        os.remove(self.previous_raw)
+
+                    best_return = validation_score
                     torch.save(self.model.state_dict(), "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int)))
                     print("Saving raw model! Best return is updated to ", best_return)
+                    self.previous_raw = "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int))
 
 
                 if self.monitoring_nb_trials>0 and episode % self.monitor_every == 0: 
