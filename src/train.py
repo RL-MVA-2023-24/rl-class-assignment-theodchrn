@@ -38,6 +38,7 @@ class ProjectAgent:
         print("Instanciation de l'agent")
 
         self.config = {'nb_actions': env.action_space.n ,
+                       'action_size' : 1,
                        'state_dim': env.observation_space.shape[0],
                        'hidden_layers' : 5,
                        'nb_neurons' : 512,
@@ -50,7 +51,7 @@ class ProjectAgent:
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
                        'gradient_steps': 2,
-                       'update_target_strategy':'replace', #'ema', # or
+                       'update_target_strategy':'ema', #'ema', # or
                        'update_target_freq': 100,
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
@@ -60,7 +61,10 @@ class ProjectAgent:
                        'save_always': 25,
                        'double' : True,
                        'update_mem_every' : 20,          # how often to update the priorities
-                       'update_mem_par_every' : 3000,     # how often to update the hyperparameters
+                       'use_priority' : True,
+                       'PER_Buffer_eps' : 0.7,
+                       'PER_Buffer_Alpha' : 0.7,
+                       'PER_Buffer_Beta' : 0.4,
                        }
 
         self.config['time'] = datetime.now().strftime("%Y%m%d-%H%M%S")

@@ -118,7 +118,6 @@ class Agent:
             loss.backward()
             self.optimizer.step() 
 
-
     def gradient_step_double(self):
         if len(self.memory) > self.batch_size:
             X, A, R, Y, D = self.memory.sample(self.batch_size)
@@ -171,6 +170,11 @@ class Agent:
         return np.mean(val)
 
 
+    def gradient_step(self):
+        if self.double:
+            self.gradient_step_double()
+        else:
+            self.gradient_step_target()
 
     def train(self, env, max_episode = None):
         self.model.train()
@@ -188,7 +192,7 @@ class Agent:
         MC_avg_discounted_reward = []   
         V_init_state = []   
 
-        self.gradient_step = self.gradient_step_double if self.double else self.gradient_step_target
+
         def generator():
             while episode < max_episode:
                 yield
@@ -212,8 +216,7 @@ class Agent:
 
             # train
             for _ in range(self.nb_gradient_steps):
-                self.gradient_step_target()
-                #self.gradient_step()
+                self.gradient_step()
 
 
             # update target network if needed
