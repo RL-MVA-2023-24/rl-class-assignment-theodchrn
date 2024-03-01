@@ -122,7 +122,7 @@ class Agent:
     def load(self, path):
         print(f"loading model {path}")
         self.model.load_state_dict(torch.load(path + ".pt",map_location=device()))
-        self.model.eval()
+        self.target_model = deepcopy(self.model).to(device())
 
     def evaluate_policy(self, env, episodes=5, seed=0):
         set_seed(env, seed=seed)
@@ -143,6 +143,8 @@ class Agent:
     def train(self, env, max_episode = None): 
 
         max_episode = 20 if None else max_episode
+
+        self.previous_raw = None
 
 
         episode_return = []
@@ -216,11 +218,19 @@ class Agent:
                         if mean > best_reward:
                             best_reward = mean
                         if validation_score > best_return:
+                            if self.previous_raw is not None:
+                                os.remove(self.previous_raw)
+
+
                             best_return = validation_score
                             self.best_model = deepcopy(self.model).to(device())
-                            torch.save(self.best_model.state_dict(), "best_model_{}_val_len_{}.pt".format(self.time, np.floor(np.log10(np.abs(validation_score))).astype(int)))
+                            torch.save(self.model.state_dict(), "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, \
+                                    int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int)))
+
                             print(f"Saving model! Current validation score : {validation_score:.6g}\n")
                             print("Saving model! Best return is updated to ", best_reward)
+                            self.previous_raw = "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, \
+                                    int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int))
 
                     if episode % self.save_always == 0:
                         self.saved_model = deepcopy(self.model).to(device())

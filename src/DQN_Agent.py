@@ -105,7 +105,7 @@ class Agent:
         device = "cuda" if next(self.model.parameters()).is_cuda else "cpu"
         print(f"loading model {path}")
         self.model.load_state_dict(torch.load(path + ".pt",map_location=device))
-        self.model.eval()
+        self.target_model = deepcopy(self.model).to(device)
 
     def gradient_step_target(self):
         if len(self.memory) > self.batch_size:
