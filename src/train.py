@@ -1,5 +1,5 @@
 from gymnasium.wrappers.time_limit import TimeLimit
-## todo : possibilié loader modèle + argparser saad souilmi
+## todo : possibilié loader modèle + argparser
 from env_hiv import HIVPatient
 import torch
 import random
@@ -89,6 +89,10 @@ class ProjectAgent:
             self.config['max_episode'] = int(sys.argv[2])
             self.config['nb_episodes'] = int(sys.argv[2])
             self.config['agent_name'] = self.agent_name
+            if len(sys.argv)==4:
+                self.config['epsilon_max'] = .2
+                self.config['epsilon_min'] = 1e-3
+
             print(f"{self.config['agent_name']=}")
             self.agent = agent(self.config)
             self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, self.config['time'])
@@ -181,18 +185,17 @@ def fill_buffer(env, agent, buffer_size):
 
 if __name__ == "__main__":
     # Set the seed
-    seed = 42
+    seed = np.random.randint(42)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    #env.seed(seed)
     # Set the device
 
     # Fill the buffer
     FinalAgent = ProjectAgent()
-    if FinalAgent.agent_name == 'DQN_Agent':
+    if FinalAgent.agent_name != 'PER_Agent':
         fill_buffer(env, FinalAgent.agent,FinalAgent.config['buffer_size']) 
 
     ep_length, disc_rewards, tot_rewards, V0 = FinalAgent.agent.train(env, FinalAgent.config['max_episode'])

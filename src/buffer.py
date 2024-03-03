@@ -27,8 +27,7 @@ class PrioritizedReplayBuffer:
         self.real_size = 0
         self.size = buffer_size
 
-    def add(self, transition):
-        state, action, reward, next_state, done = transition
+    def append(self, state, action, reward, next_state, done ):
 
         # store transition index with maximum priority in sum tree
         self.tree.add(self.max_priority, self.count)
@@ -109,43 +108,20 @@ class PrioritizedReplayBuffer:
             self.max_priority = max(self.max_priority, priority)
 
 
+#Honteusement volé au nb 4 sur les DQN
 class ReplayBuffer:
-    def __init__(self, state_size, action_size, buffer_size):
-        # state, action, reward, next_state, done
-        self.state = torch.empty(buffer_size, state_size, dtype=torch.float)
-        self.action = torch.empty(buffer_size, action_size, dtype=torch.float)
-        self.reward = torch.empty(buffer_size, dtype=torch.float)
-        self.next_state = torch.empty(buffer_size, state_size, dtype=torch.float)
-        self.done = torch.empty(buffer_size, dtype=torch.int)
-
-        self.count = 0
-        self.real_size = 0
-        self.size = buffer_size
-
-    def add(self, transition):
-        state, action, reward, next_state, done = transition
-
-        # store transition in the buffer
-        self.state[self.count] = torch.as_tensor(state)
-        self.action[self.count] = torch.as_tensor(action)
-        self.reward[self.count] = torch.as_tensor(reward)
-        self.next_state[self.count] = torch.as_tensor(next_state)
-        self.done[self.count] = torch.as_tensor(done)
-
-        # update counters
-        self.count = (self.count + 1) % self.size
-        self.real_size = min(self.size, self.real_size + 1)
-
+    def __init__(self, capacity, device):
+        self.capacity = capacity # capacity of the buffer
+        self.data = []
+        self.index = 0 # index of the next cell to be filled
+        self.device = device
+    def append(self, s, a, r, s_, d):
+        if len(self.data) < self.capacity:
+            self.data.append(None)
+        self.data[self.index] = (s, a, r, s_, d)
+        self.index = (self.index + 1) % self.capacity
     def sample(self, batch_size):
-        assert self.real_size >= batch_size
-
-        sample_idxs = np.random.choice(self.real_size, batch_size, replace=False)
-
-        batch = (
-            self.state[sample_idxs].to(device()),
-            self.action[sample_idxs].to(device()),
-            self.reward[sample_idxs].to(device()),
-            self.next_state[sample_idxs].to(device()),
-            self.done[sample_idxs].to(device())
-        )
-        return batch
+        batch = random.sample(self.data, batch_size)
+        return list(map(lambda x:torch.Tensor(np.array(x)).to(self.device), list(zip(*batch))))
+    def __len__(self):
+        return len(self.data)

@@ -3,6 +3,8 @@ from env_hiv import HIVPatient
 from evaluate import evaluate_HIV
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import math
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -16,12 +18,68 @@ env = TimeLimit(
         env=HIVPatient(domain_randomization=False), max_episode_steps=200)
 
 
+class NoisyLinear(nn.Module):
+    # Noisy Linear Layer for factorised Gaussian Noise, for better computational efficiency
+    def __init__(self, in_features, out_features, sigma_init=0.5):
+        super(NoisyLinear, self).__init__()
+        # make the sigmas trainable:
+        self.in_features = in_features
+        self.out_features = out_features
+        self.sigma_init = sigma_init
+
+        self.weight_mu = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.weight_sigma = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        # not trainable tensor for the nn.Module
+        self.register_buffer('weight_epsilon', torch.FloatTensor(out_features, in_features))
+
+
+        # extra parameter for the bias and register buffer for the bias parameter
+        self.bias_mu = nn.Parameter(torch.FloatTensor(out_features))
+        self.bias_sigma = nn.Parameter(torch.FloatTensor(out_features))
+        self.register_buffer('bias_epsilon', torch.FloatTensor(out_features))
+    
+        # reset parameter as initialization of the layer
+        self.reset_parameter()
+        self.reset_noise()
+    
+    def reset_parameter(self):
+        """
+        On initialise les paramètres
+        """
+        std = math.sqrt(1/self.in_features)
+        self.weight_mu.data.uniform_(-std, std)
+        self.bias_mu.data.uniform_(-std, std)
+
+        self.weight_sigma.data.fill_(self.sigma_init * std)
+        self.bias_sigma.data.fill_(self.sigma_init * std)
+
+    def reset_noise(self):
+        epsilon_i = self.scale_noise(self.in_features)
+        epsilon_j = self.scale_noise(self.out_features)
+        self.weight_epsilon.copy_(torch.outer(epsilon_j, epsilon_i))
+        self.bias_epsilon.copy_(epsilon_j)
+
+    def scale_noise(self, size):
+        x = torch.randn(size) # generate 0-mean noise with fixed statistic (Gaussian(O,1))
+        x = x.sign().mul(torch.sqrt(x.abs())) # activation function
+        return x
+    
+    def forward(self, input):
+        #sample factorised gaussian noise
+        self.reset_noise()
+
+        weight = self.weight_mu + self.weight_sigma.mul(self.weight_epsilon)
+        bias = self.bias_mu + self.bias_sigma.mul(self.bias_epsilon)
+
+        return F.linear(input, weight, bias)
+
+
 class MLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, depth = 2, activation = nn.SiLU(), normalization = None):
         super(MLP, self).__init__()
         self.input_layer = nn.Linear(input_dim, hidden_dim)
-        self.hidden_layers = nn.ModuleList([nn.Linear(hidden_dim, hidden_dim) for _ in range(depth - 1)])
-        self.output_layer = nn.Linear(hidden_dim, output_dim)
+        self.hidden_layers = nn.ModuleList([nn.Linear(hidden_dim, \
+                hidden_dim) for _ in range(depth - 1)])
         if activation is not None:
             self.activation = activation
         else:
@@ -33,19 +91,25 @@ class MLP(nn.Module):
         else:
             self.normalization = None
 
+        self.nn_1 = NoisyLinear(hidden_dim, hidden_dim)
+        self.nn_2 = NoisyLinear(hidden_dim, output_dim)
+
+
     def forward(self, x):
         x = self.activation(self.input_layer(x))
         for layer in self.hidden_layers:
             x = self.activation(layer(x))
             if self.normalization is not None:
                 x = self.normalization(x)
-        return self.output_layer(x)
+        x = F.relu(self.nn_1(x))
+        return self.nn_2(x)
 
 
 class Agent:
     def __init__(self, config):
-        #self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.SiLU(), normalization = 'None').to(device)
-        self.model = MLP(config['state_dim'], config['nb_neurons'], config['nb_actions'], depth = config['hidden_layers'], activation =nn.ReLU(), normalization = 'None').to(device)
+        self.model = MLP(input_dim=config['state_dim'], hidden_dim=config['nb_neurons'], \
+                output_dim=config['nb_actions'], depth = config['hidden_layers'], \
+                activation =nn.ReLU(), normalization = 'None').to(device)
         self.time = config['time']
         self.name = config['agent_name']
         self.nb_actions = config['nb_actions']
@@ -282,7 +346,7 @@ class Agent:
                 else:
                     episode_return.append(episode_cum_reward)
                     print("Episode ", '{:2d}'.format(episode), 
-                          ", epsilon ", '{:6.2f}'.format(epsilon), 
+                          ", epsilon ", '{:6.4f}'.format(epsilon), 
                           ", memory size ", '{:4d}'.format(len(self.memory)), 
                           ", ep return ", '{:6.0f}'.format(episode_cum_reward), 
                           ", Validation score ", '{:4.6g}'.format(validation_score),

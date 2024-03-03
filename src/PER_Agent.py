@@ -1,6 +1,6 @@
 import gymnasium as gym
 from env_hiv import HIVPatient
-from evaluate import evaluate_HIV
+from evaluate import evaluate_HIV_population
 import torch
 import random
 import numpy as np
@@ -83,6 +83,7 @@ class Agent:
                 self.target_model.load_state_dict(self.model.state_dict())
 
 
+
     def act(self, state, use_random = False):
         if use_random:
             return np.random.randint(self.nb_actions)
@@ -147,6 +148,10 @@ class Agent:
         self.previous_raw = None
 
 
+        if isinstance(self.memory, PrioritizedReplayBuffer):
+            print(f"Prioritizing Experience Replay!")
+        else:
+            print("Warning not prioritizing!!")
         episode_return = []
         episode = 0
         step=0
@@ -156,7 +161,7 @@ class Agent:
         batch_size=self.batch_size
         eps =self.epsilon_max 
         test_every=self.monitor_every
-        seed=42
+        seed=np.random.randint(42)
         print(f"Training on: {env}, Device: {device()}, Seed: {seed}")
 
 
@@ -185,7 +190,7 @@ class Agent:
             next_state, reward, terminated, truncated, _ = env.step(action)
             step += 1
             done = terminated or truncated
-            self.memory.add((state, action, reward, next_state, int(done)))
+            self.memory.append(state, action, reward, next_state, int(done))
 
             state = next_state
 
@@ -210,10 +215,10 @@ class Agent:
                     episode += 1
                     if episode % test_every == 0:
                         mean, std = self.evaluate_policy(env, episodes=10, seed=seed)
-                        validation_score = evaluate_HIV(agent=self, nb_episode=1)
+                        validation_score = evaluate_HIV_population(agent=self, nb_episode=5)
                         episode_return.append(validation_score)
 
-                        print(f"Episode: {episode}, Validation score: {validation_score:4.6g}, Reward mean: {mean:.2f}, Reward std: {std:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps}")
+                        print(f"Episode: {episode}, Validation score: {validation_score:4.6g}, Reward mean: {mean:.2f}, Reward std: {std:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps:.3f}")
 
                         if mean > best_reward:
                             best_reward = mean
@@ -224,12 +229,12 @@ class Agent:
 
                             best_return = validation_score
                             self.best_model = deepcopy(self.model).to(device())
-                            torch.save(self.model.state_dict(), "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, \
+                            torch.save(self.model.state_dict(), "best_raw_{}_model_{}_val_len_{}_{}.pt".format(self.name, self.time, \
                                     int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int)))
 
                             print(f"Saving model! Current validation score : {validation_score:.6g}\n")
                             print("Saving model! Best return is updated to ", best_reward)
-                            self.previous_raw = "best_raw_model_{}_val_len_{}_{}.pt".format(self.time, \
+                            self.previous_raw = "best_raw_{}_model_{}_val_len_{}_{}.pt".format(self.name, self.time, \
                                     int(str(validation_score)[:2]), np.floor(np.log10(np.abs(validation_score))).astype(int))
 
                     if episode % self.save_always == 0:
@@ -246,4 +251,4 @@ class Agent:
                         rewards_total.append(mean)
                         stds_total.append(std)
 
-        return np.array(rewards_total), np.array(stds_total), 0, 0
+        return np.array(rewards_total), np.array(stds_total), total_loss, 0
