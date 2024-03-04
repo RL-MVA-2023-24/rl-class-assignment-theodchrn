@@ -1,12 +1,9 @@
-import gymnasium as gym
-from env_hiv import HIVPatient
 from evaluate import evaluate_HIV
 import torch
 import random
 import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
-import torch.optim as optim
 
 from copy import deepcopy
 import os

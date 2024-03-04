@@ -46,7 +46,7 @@ class ProjectAgent:
                        'hidden_layers': 5,
                        'nb_neurons': 512,
                        'learning_rate': 0.001,
-                       'gamma': 0.95,  # choisi d'après Ernst et al., 2006
+                       'gamma': 0.98,  # choisi d'après Ernst et al., 2006
                        'buffer_size': 100000,  # en-dessous de 5 000 on dirait qu'il n'apprend pas
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
@@ -54,7 +54,7 @@ class ProjectAgent:
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
                        'gradient_steps': 2,
-                       'update_target_strategy': 'ema',  # 'ema', # or
+                       'update_target_strategy': 'ema',  # 'ema', # or replace
                        'update_target_freq': 100,
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),

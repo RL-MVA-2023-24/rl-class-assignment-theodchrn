@@ -1,6 +1,6 @@
 from gymnasium.wrappers.time_limit import TimeLimit
 from env_hiv import HIVPatient
-from evaluate import evaluate_HIV_population
+from evaluate import evaluate_HIV
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -326,7 +326,7 @@ class Agent:
             step += 1
             if done or trunc:
                 episode += 1
-                validation_score = evaluate_HIV_population(agent=self, nb_episode=15)
+                validation_score = evaluate_HIV(agent=self, nb_episode=1)
 
                 # Monitoring
                 if episode % self.save_always == 0:
