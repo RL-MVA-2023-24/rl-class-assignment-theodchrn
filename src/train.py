@@ -1,5 +1,6 @@
+import matplotlib.pyplot as plt
 from gymnasium.wrappers.time_limit import TimeLimit
-## todo : possibilié loader modèle + argparser
+# todo : possibilié loader modèle + argparser
 from env_hiv import HIVPatient
 import torch
 import random
@@ -10,7 +11,6 @@ import os
 from datetime import datetime
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -22,6 +22,8 @@ env = TimeLimit(
 # You have to implement your own agent.
 # Don't modify the methods names and signatures, but you can add methods.
 # ENJOY!
+
+
 class ProjectAgent:
     """
     Defines an interface for agents in a simulation or decision-making environment.
@@ -33,38 +35,39 @@ class ProjectAgent:
     Protocols are a way to define formal Python interfaces. They allow for type checking
     and ensure that implementing classes provide specific methods with the expected signatures.
     """
+
     def __init__(self):
 
         print("Instanciation de l'agent")
 
-        self.config = {'nb_actions': env.action_space.n ,
-                       'action_size' : 1,
+        self.config = {'nb_actions': env.action_space.n,
+                       'action_size': 1,
                        'state_dim': env.observation_space.shape[0],
-                       'hidden_layers' : 5,
-                       'nb_neurons' : 512,
+                       'hidden_layers': 5,
+                       'nb_neurons': 512,
                        'learning_rate': 0.001,
-                       'gamma': 0.98, #choisi d'après Ernst et al., 2006
-                       'buffer_size': 100000, #en-dessous de 5 000 on dirait qu'il n'apprend pas
+                       'gamma': 0.95,  # choisi d'après Ernst et al., 2006
+                       'buffer_size': 100000,  # en-dessous de 5 000 on dirait qu'il n'apprend pas
                        'epsilon_min': 0.01,
                        'epsilon_max': 1.,
                        'epsilon_decay_period': 10000,
                        'epsilon_delay_decay': 400,
                        'batch_size': 1024,
                        'gradient_steps': 2,
-                       'update_target_strategy':'ema', #'ema', # or
+                       'update_target_strategy': 'ema',  # 'ema', # or
                        'update_target_freq': 100,
                        'update_target_tau': 0.005,
                        'criterion': torch.nn.SmoothL1Loss(),
-                       'monitoring_nb_trials': 20, 
-                       'monitor_every': 3, 
+                       'monitoring_nb_trials': 20,
+                       'monitor_every': 3,
                        'save_every': 50,
                        'save_always': 25,
-                       'double' : True,
-                       'update_mem_every' : 20,          # how often to update the priorities
-                       'use_priority' : True,
-                       'PER_Buffer_eps' : 0.7,
-                       'PER_Buffer_Alpha' : 0.7,
-                       'PER_Buffer_Beta' : 0.4,
+                       'double': True,
+                       'update_mem_every': 20,          # how often to update the priorities
+                       'use_priority': True,
+                       'PER_Buffer_eps': 0.7,
+                       'PER_Buffer_Alpha': 0.5,
+                       'PER_Buffer_Beta': 0.5,
                        }
 
         self.config['time'] = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -75,34 +78,38 @@ class ProjectAgent:
             self.config['max_episode'] = 20
             self.config['nb_episodes'] = 20
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/models/model"
+            self.path = os.getcwd() + "/models/best"
 
         elif len(sys.argv) >= 2:
             import importlib.util
-            agent_file = os.getcwd() + "/" + sys.argv[1] # get full path
-            self.agent_name = os.path.basename(os.path.normpath(sys.argv[1][:-3])) #get only specific module name
-            spec = importlib.util.spec_from_file_location(self.agent_name, agent_file) #delete trailing slashes and get module name
-            module = importlib.util.module_from_spec(spec) # import module
-            spec.loader.exec_module(module) #load module in its own workspace
-            agent = getattr(module, 'Agent') #load the Agent class as agent
+            agent_file = os.getcwd() + "/" + sys.argv[1]  # get full path
+            self.agent_name = os.path.basename(os.path.normpath(
+                sys.argv[1][:-3]))  # get only specific module name
+            spec = importlib.util.spec_from_file_location(
+                self.agent_name, agent_file)  # delete trailing slashes and get module name
+            module = importlib.util.module_from_spec(spec)  # import module
+            spec.loader.exec_module(module)  # load module in its own workspace
+            agent = getattr(module, 'Agent')  # load the Agent class as agent
 
             self.config['max_episode'] = int(sys.argv[2])
             self.config['nb_episodes'] = int(sys.argv[2])
             self.config['agent_name'] = self.agent_name
-            if len(sys.argv)==4:
-                self.config['epsilon_max'] = .2
-                self.config['epsilon_min'] = 1e-3
+            if len(sys.argv) == 4:
+                self.config['epsilon_max'] = .3
+                self.config['epsilon_min'] = 5e-3
+                self.config['buffer_size'] = 10000
 
             print(f"{self.config['agent_name']=}")
             self.agent = agent(self.config)
-            self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name, self.config['time'])
+            self.path = os.getcwd() + "/models/{}_{}".format(self.agent_name,
+                                                             self.config['time'])
 
-            if len(sys.argv)==4:
+            if len(sys.argv) == 4:
                 self.agent.load(sys.argv[-1][:-3])
 
         print(f'{device=}')
 
-    #def act(self, observation: np.ndarray, use_random: bool = False) -> int:
+    # def act(self, observation: np.ndarray, use_random: bool = False) -> int:
     def act(self, observation, use_random=False):
         """
         Determines the next action based on the current observation from the environment.
@@ -125,9 +132,9 @@ class ProjectAgent:
 #                Q = self.agent(torch.Tensor(observation).unsqueeze(0).to(device))
 #                return torch.argmax(Q).item()
 
+    # def save(self, path: str) -> None:
 
-    #def save(self, path: str) -> None:
-    def save(self, path = None):
+    def save(self, path=None):
         """
         Saves the agent's current state to a file specified by the path.
 
@@ -141,10 +148,10 @@ class ProjectAgent:
         path = self.path if None else path
         print(f"Sauvegarde du modèle à : {path}")
         self.agent.save(path)
-        #torch.save(self.agent.model.state_dict(), self.path)
+        # torch.save(self.agent.model.state_dict(), self.path)
 
+    # def load(self) -> None:
 
-    #def load(self) -> None:
     def load(self):
         """
         Loads the agent's state from a file specified by the path (HARDCODED). This not a good practice,
@@ -172,7 +179,7 @@ def fill_buffer(env, agent, buffer_size):
     state, _ = env.reset()
     progress_bar = tqdm(total=buffer_size, desc="Filling the replay buffer")
     for _ in range(buffer_size):
-        action = agent.act(state, use_random = False)
+        action = agent.act(state, use_random=False)
         next_state, reward, done, trunc, _ = env.step(action)
         agent.memory.append(state, action, reward, next_state, done)
         if done or trunc:
@@ -196,24 +203,24 @@ if __name__ == "__main__":
     # Fill the buffer
     FinalAgent = ProjectAgent()
     if FinalAgent.agent_name != 'PER_Agent':
-        fill_buffer(env, FinalAgent.agent,FinalAgent.config['buffer_size']) 
+        fill_buffer(env, FinalAgent.agent, FinalAgent.config['buffer_size'])
 
-    ep_length, disc_rewards, tot_rewards, V0 = FinalAgent.agent.train(env, FinalAgent.config['max_episode'])
+    ep_length, disc_rewards, tot_rewards, V0 = FinalAgent.agent.train(
+        env, FinalAgent.config['max_episode'])
     FinalAgent.save(FinalAgent.path)
-
 
     plt.figure()
     plt.plot(ep_length, label="training episode length")
-    if FinalAgent.config['monitoring_nb_trials']>0:
+    if FinalAgent.config['monitoring_nb_trials'] > 0:
         plt.plot(tot_rewards, label="MC eval of total reward")
     plt.legend()
-    plt.savefig(FinalAgent.path+'-fig1.png')
+    plt.savefig(FinalAgent.path + '-fig1.png')
 
-    if FinalAgent.config['monitoring_nb_trials']>0:
+    if FinalAgent.config['monitoring_nb_trials'] > 0:
         plt.figure()
         plt.plot(disc_rewards, label="MC eval of discounted reward")
         plt.plot(V0, label="average $max_a Q(s_0)$")
         plt.legend()
-        plt.savefig(FinalAgent.path+'-fig2.png')
+        plt.savefig(FinalAgent.path + '-fig2.png')
 
     print("Agent trained and saved!")
